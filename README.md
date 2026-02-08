@@ -1,6 +1,8 @@
 # AI Chatbot MVP
 
-3시간 안에 돌아가는 챗봇 API를 만드는 과제. Kotlin + Spring Boot 기반.
+3시간 안에 돌아가는 챗봇 API를 만드는 과제
+
+Kotlin + Spring Boot 기반
 
 ---
 
