@@ -12,7 +12,7 @@
 docker-compose up --build
 ```
 
-PostgreSQL 15.8 + Spring Boot가 한 번에 뜬다. `http://localhost:8080/swagger-ui.html`에서 API 확인 가능.
+PostgreSQL 15.8 + Spring Boot가 한 번에 뜬다. `http://localhost:8080/swagger-ui.html`에서 API 확인 가능
 
 ### 로컬 (H2)
 
@@ -20,7 +20,7 @@ PostgreSQL 15.8 + Spring Boot가 한 번에 뜬다. `http://localhost:8080/swagg
 ./gradlew bootRun
 ```
 
-H2 인메모리 DB로 바로 실행된다. H2 콘솔은 `http://localhost:8080/h2-console`.
+H2 인메모리 DB로 바로 실행된다. H2 콘솔은 `http://localhost:8080/h2-console`
 
 ### E2E 테스트
 
@@ -29,7 +29,7 @@ chmod +x e2e-test.sh
 ./e2e-test.sh
 ```
 
-전체 API 플로우를 curl로 돌려본다. 회원가입부터 CSV 다운로드까지 한 번에 검증.
+전체 API 플로우를 curl로 돌려 본다. 회원가입부터 CSV 다운로드까지 한 번에 검증
 
 ### 시딩 계정
 
@@ -60,9 +60,9 @@ chmod +x e2e-test.sh
 - 지금은 MVP지만, 나중에 RAG(문서 학습) 같은 걸 붙일 수 있어야 함
 - 고객사 직원이 OpenAI를 직접 쓸 수준은 아님 -> 우리가 래핑해서 제공
 
-여기서 "지속적으로 확장 개발 가능해야 합니다"가 사실상 이 과제의 진짜 채점 포인트라고 판단했다. 구현량보다 구조가 중요하다는 뜻이니까.
+여기서 "지속적으로 확장 개발 가능해야 합니다"가 사실상 이 과제의 진짜 채점 포인트라고 판단했다. 구현량보다 구조가 중요하다는 뜻인 것 같다 ?
 
-그래서 전략을 이렇게 잡았다:
+그래서 전략을 이렇게 잡고:
 
 1. AI 연동 부분은 **인터페이스(AiClient)로 추상화**해서, 구현체를 바꿔 끼울 수 있게 만든다.
 2. 시간이 촉박하니 "모든 기능을 다 구현하는 것"보다 "핵심 로직이 깔끔하게 동작하는 것"에 집중한다.
@@ -81,17 +81,13 @@ AiClient (interface)
 └── (미래) RagAiClient → RAG 파이프라인 연동
 ```
 
-`@ConditionalOnExpression`으로 API Key 유무에 따라 구현체가 자동 전환된다. 새로운 AI 프로바이더를 붙이려면 `AiClient`를 구현하는 클래스 하나만 만들면 된다. 기존 코드는 건드릴 필요 없음.
-
-Spring에서는 이걸 DIP(의존성 역전) + 전략 패턴이라고 부른다. NestJS로 치면 `{ provide: 'AI_CLIENT', useClass: OpenAiClient }` 패턴과 같은 맥락.
+`@ConditionalOnExpression`으로 API Key 유무에 따라 구현체가 자동 전환된다. 새로운 AI 프로바이더를 붙이려면 `AiClient`를 구현하는 클래스 하나만 만들면 된다. 기존 코드는 건드릴 필요 없음
 
 ### 30분 스레드 정책
 
 Thread 엔티티에 `lastMessageAt`이라는 필드를 따로 뒀다. 이게 핵심인데, 만약 이 필드가 없으면 매 요청마다 Chat 테이블을 JOIN해서 "가장 최근 대화 시각"을 계산해야 한다. Chat이 쌓일수록 느려진다.
 
 `lastMessageAt`을 Thread에 비정규화해두면 `WHERE user_id = ? ORDER BY last_message_at DESC LIMIT 1` 한 방이면 끝. 여기에 복합 인덱스 `(user_id, last_message_at DESC)`를 걸어서 인덱스 스캔으로 처리되게 했다.
-
-비정규화의 트레이드오프(데이터 일관성 vs 읽기 성능)를 알고 쓴 거다.
 
 ### 패키지 구조
 
@@ -136,7 +132,7 @@ SSE 스트리밍으로 토큰을 하나씩 클라이언트에 보내면서, 동�
 
 해결: Chat 엔티티를 빈 answer로 먼저 저장하고, `Flux`의 `doOnNext`로 토큰을 `StringBuilder`에 누적, `doOnComplete`에서 최종 answer를 DB에 반영하는 방식으로 처리했다.
 
-다만 이 방식에는 한계가 있다. 스트리밍 중간에 클라이언트가 연결을 끊으면 `doOnComplete`가 호출되지 않아 빈 answer가 남을 수 있다. 프로덕션이라면 `doOnCancel`에서도 현재까지 누적된 내용을 저장하는 로직이 필요하다. 3시간 안에는 여기까지만.
+다만 이 방식에는 한계가 있다. 스트리밍 중간에 클라이언트가 연결을 끊으면 `doOnComplete`가 호출되지 않아 빈 answer가 남을 수 있다. 프로덕션이라면 `doOnCancel`에서도 현재까지 누적된 내용을 저장하는 로직이 필요하다. 3시간 안에는 여기까지만 ..
 
 ### 2. 피드백 권한 모델
 
@@ -145,7 +141,7 @@ SSE 스트리밍으로 토큰을 하나씩 클라이언트에 보내면서, 동�
 - ADMIN은 **모든 대화**에 피드백 가능
 - 한 대화에 대해 **유저당 하나**의 피드백만 허용 (다른 유저는 별개)
 
-처음에 `chat_id`에만 UNIQUE를 걸었다가 "하나의 대화에는 서로 다른 사용자들이 생성한 n개의 피드백이 존재할 수 있습니다"를 읽고 `(chat_id, user_id)` 복합 유니크로 수정했다. 요구사항을 대충 읽으면 이런 데서 틀린다.
+처음에 `chat_id`에만 UNIQUE를 걸었다가 "하나의 대화에는 서로 다른 사용자들이 생성한 n개의 피드백이 존재할 수 있습니다"를 읽고 `(chat_id, user_id)` 복합 유니크로 수정했다.
 
 ---
 
@@ -172,7 +168,7 @@ SSE 스트리밍으로 토큰을 하나씩 클라이언트에 보내면서, 동�
 
 3시간이라 못 한 것들:
 
-- **Refresh Token**: 현재 Access Token만 발급. 실제 서비스라면 Refresh Token + 토큰 갈아타기 로직 필요.
-- **Rate Limiting**: OpenAI API 호출에 대한 요청 제한 없음. 프로덕션이면 Bucket4j 같은 걸 붙여야 한다.
-- **대화 컨텍스트 길이 제한**: 스레드 내 모든 이전 대화를 OpenAI에 보내는데, 대화가 길어지면 토큰 한도 초과. 슬라이딩 윈도우나 요약 전략 필요.
-- **테스트 커버리지**: ThreadService 유닛 테스트만 작성. 통합 테스트와 컨트롤러 테스트는 시간 부족으로 생략.
+- **Refresh Token**: 현재 Access Token만 발급. 실제 서비스라면 Refresh Token + 토큰 갈아타기 로직 필요
+- **Rate Limiting**: OpenAI API 호출에 대한 요청 제한 없음. 프로덕션이면 Bucket4j 같은 걸 붙여야 한다
+- **대화 컨텍스트 길이 제한**: 스레드 내 모든 이전 대화를 OpenAI에 보내는데, 대화가 길어지면 토큰 한도 초과, 슬라이딩 윈도우나 요약 전략 필요
+- **테스트 커버리지**: ThreadService 유닛 테스트만 작성. 통합 테스트와 컨트롤러 테스트는 시간 부족으로 생략
